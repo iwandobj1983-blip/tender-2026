@@ -184,6 +184,20 @@ td.quantity{font-family:'JetBrains Mono',monospace;text-align:right;white-space:
 td.unit{color:var(--text3);text-align:center;width:45px}
 td.price{font-family:'JetBrains Mono',monospace;text-align:right;white-space:nowrap;color:var(--text3)}
 td.price.has-value{color:var(--accent);font-weight:600}
+/* AUTH: приховані колонки */
+.auth-hidden { display:none !important }
+.auth-banner{background:linear-gradient(135deg,#fff7ed,#fffbeb);border:2px solid #f59e0b;border-radius:16px;padding:1.5rem;margin:1rem 0;text-align:center}
+.auth-banner h3{color:#92400e;margin-bottom:.5rem;font-size:1.1rem}
+.auth-banner p{color:#78716c;font-size:.9rem;margin-bottom:1rem}
+.auth-input-wrap{display:flex;gap:.5rem;justify-content:center;align-items:center;flex-wrap:wrap}
+.auth-input{padding:.6rem 1rem;border:2px solid #d6d3d1;border-radius:10px;font-size:1rem;width:180px;text-align:center;font-family:'JetBrains Mono',monospace;letter-spacing:2px}
+.auth-input:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-dim)}
+.auth-btn{padding:.6rem 1.2rem;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:.95rem;cursor:pointer;font-weight:600}
+.auth-btn:hover{background:#15803d}
+.auth-error{color:#dc2626;font-size:.85rem;margin-top:.5rem;display:none}
+.auth-success{background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:2px solid #22c55e;border-radius:16px;padding:1rem 1.5rem;margin:1rem 0;text-align:center;display:none}
+.auth-success .name{color:var(--accent);font-weight:700}
+.auth-logout{color:#78716c;font-size:.85rem;cursor:pointer;text-decoration:underline;margin-left:.5rem}
 td.action{text-align:center;white-space:nowrap}
 
 .term-badge{display:inline-block;padding:.2rem .55rem;border-radius:6px;font-size:.73rem;font-family:'JetBrains Mono',monospace}
@@ -267,6 +281,25 @@ td.action{text-align:center;white-space:nowrap}
   </div>
 </header>
 
+<!-- AUTH BANNER -->
+<div class="section" id="authBanner">
+  <div class="auth-banner">
+    <h3>🔐 Доступ для учасників тендеру</h3>
+    <p>Введіть ЄДРПОУ вашої компанії, щоб побачити кількості та мінімальні ціни</p>
+    <div class="auth-input-wrap">
+      <input type="text" id="authInput" class="auth-input" placeholder="ЄДРПОУ" maxlength="8" inputmode="numeric">
+      <button id="authBtn" class="auth-btn">🔓 Увійти</button>
+    </div>
+    <div class="auth-error" id="authError">❌ ЄДРПОУ не знайдено серед учасників тендеру</div>
+  </div>
+</div>
+<div class="section" id="authOk" style="display:none">
+  <div class="auth-success">
+    ✅ Ви авторизовані як <span class="name" id="authCompanyName">—</span>
+    <span class="auth-logout" id="authLogout">Вийти</span>
+  </div>
+</div>
+
 <section class="section fade-in">
   <div class="section-title">Графік поставок по місяцях</div>
   <div class="timeline" id="timeline"></div>
@@ -288,11 +321,11 @@ td.action{text-align:center;white-space:nowrap}
           <th data-sort="name">Назва<span class="sort-arrow">▲</span></th>
           <th data-sort="ingredient">Діюча речовина<span class="sort-arrow">▲</span></th>
           <th data-sort="unit">Од.<span class="sort-arrow">▲</span></th>
-          <th data-sort="quantity">Потреба<span class="sort-arrow">▲</span></th>
+          <th data-sort="quantity" class="auth-col auth-hidden">Потреба<span class="sort-arrow">▲</span></th>
           <th data-sort="term">Термін<span class="sort-arrow">▲</span></th>
-          <th data-sort="min_pre">Передоплата<span class="sort-arrow">▲</span></th>
-          <th data-sort="min_2080">20/80<span class="sort-arrow">▲</span></th>
-          <th data-sort="min_easy">Легко<span class="sort-arrow">▲</span></th>
+          <th data-sort="min_pre" class="auth-col auth-hidden">Передоплата<span class="sort-arrow">▲</span></th>
+          <th data-sort="min_2080" class="auth-col auth-hidden">20/80<span class="sort-arrow">▲</span></th>
+          <th data-sort="min_easy" class="auth-col auth-hidden">Легко<span class="sort-arrow">▲</span></th>
           <th>Дія</th>
         </tr></thead>
         <tbody id="lotsBody"></tbody>
@@ -322,6 +355,11 @@ const SHEET_NAME = 'Аркуш1';
 const REFRESH_INTERVAL = 300000;
 
 const BOT_URL = 'https://t.me/Mykulin_bot?start=lot_';
+
+// AUTH
+const AUTH_SHEET_NAME = 'auth';
+var IS_AUTH = false;
+var AUTH_COMPANIES = []; // [{edrpou, name}]
 // ============================================================================
 
 const FALLBACK_DATA = [{"id": 1, "name": "Авангард Бор", "ingredient": "(В), 150 г/л, азот (N), 65 г/л.", "unit": "л", "quantity": 1625.0, "term": "2026-04-15", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 2, "name": "Авангард Комплекс Бобові", "ingredient": "ультрамікроелементи, амінокислоти. Mn, Zn, Cu, хелатовані EДTA, Fe – ДTPA.", "unit": "л", "quantity": 434.0, "term": "2026-06-01", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 3, "name": "Авангард Комплекс Зернові", "ingredient": "ультрамікроелементи, амінокислоти. Mn, Zn, Cu, хелатовані EДTA, Fe – ДTPA.", "unit": "л", "quantity": 276.0, "term": "2026-05-15", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 4, "name": "Авангард Молібден", "ingredient": "", "unit": "л", "quantity": 217.0, "term": "2026-06-01", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 5, "name": "Авангард NPK Фосфор + Калій", "ingredient": "Фосфор (P2O5), 100 г/л + калій (K2O), 180 г/л", "unit": "л", "quantity": 962.0, "term": "2026-04-15", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 6, "name": "Агрітокс", "ingredient": "2-метил-4-хлорфеноксиоцтова кислота у формі солей диметиламіну натрію та калію, 500 г/л", "unit": "л", "quantity": 632.45, "term": "2026-04-25", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 7, "name": "Айворі Плюс", "ingredient": "кондеціонер води", "unit": "л", "quantity": 73.95, "term": "2026-04-15", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 8, "name": "Аксакал, ВГ", "ingredient": "Флорасулам, 250 г/кг.", "unit": "л", "quantity": 8.575, "term": "2026-05-01", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 9, "name": "Альтерно®", "ingredient": "130 г/л Піраклостробін, 80 г/л Метконазол", "unit": "л", "quantity": 299.0, "term": "2026-04-10", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 10, "name": "Альто Супер", "ingredient": "80 г/л Ципроконазол, 250 г/л Пропіконазол", "unit": "л", "quantity": 135.0, "term": "2026-07-01", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 11, "name": "Антиколорад Макс", "ingredient": "імідаклоприд 300 г/л + лямбда-цигалотрин 100 г/л", "unit": "л", "quantity": 404.75, "term": "2026-04-20", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 12, "name": "АРКЕРО", "ingredient": "ацетаміприд, 375 г/л + біфентрин, 165 г/л", "unit": "л", "quantity": 70.4, "term": "2026-04-20", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 13, "name": "АТУВА", "ingredient": "", "unit": "л", "quantity": 88.0, "term": "2026-04-15", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 14, "name": "Біскайя", "ingredient": "Тіаклоприд — 240 г/л", "unit": "л", "quantity": 149.5, "term": "2026-05-10", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 15, "name": "ВАЙБРАНС ТРІО", "ingredient": "25 г/л Седаксан 25 г/л Флудиоксоніл 10 г/л Тебуконазол", "unit": "л", "quantity": 306.02, "term": "2026-02-20", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 16, "name": "ВАЙБРАНС® RFC ", "ingredient": "25 г/л Флудиоксоніл 37,5 г/л металаксилу–М 50 г/л Седаксан", "unit": "л", "quantity": 51.0, "term": "2026-04-15", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 17, "name": "Вербен", "ingredient": "проквіназид, 50 г/л; протіоконазол, 200 г/л", "unit": "л", "quantity": 554.1, "term": "2026-04-25", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 18, "name": "Віволт", "ingredient": "90% етоксилату ізодециловий спирт", "unit": "л", "quantity": 221.1, "term": "2026-04-20", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 19, "name": "Вінат ", "ingredient": "Боскаліл 500г/л", "unit": "л", "quantity": 65.1, "term": "2026-07-10", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 20, "name": "Вуксал Борон pH", "ingredient": "N-70 г/л, P-183 г/л, B-108 г/л, S-5.5 г/л, Cu-0.7 г/л, Fe-1.4 г/л, Mn-0.7 г/л, Mo-0.014 г/л, Zn-0.7 г/л", "unit": "л", "quantity": 405.0, "term": "2026-04-15", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 21, "name": "ВIOFERT NPK 7-20-28+МЕ", "ingredient": "", "unit": "т", "quantity": 104.325, "term": "2026-03-15", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 22, "name": "Геліантекс", "ingredient": "галауксифен-метил, 68,5 г/л ", "unit": "кг", "quantity": 17.496, "term": "2026-05-10", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 23, "name": "Гліфовіт РК (20-л)", "ingredient": "Ізопропіламінна сіль гліфосату, 480 г/л,", "unit": "л", "quantity": 738.231, "term": "2026-07-01", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 24, "name": "Гранстар Про 75", "ingredient": "Трибенурон-метил 750гр/кг", "unit": "кг", "quantity": 2.7, "term": "2026-04-15", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 25, "name": "Гроділ® Максі", "ingredient": "йодосульфурон, 25 г/л + амідосульфурон, 100 г/л + мефенпір-діетил (антидот), 250 г/л", "unit": "л", "quantity": 81.345, "term": "2026-04-25", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 26, "name": "Гуміфілд ВР-18", "ingredient": "", "unit": "л", "quantity": 492.9, "term": "2026-04-15", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 27, "name": "Гуміфілд Форте Аміно", "ingredient": "Амінокислоти 60 г/л, Солі гумінових кислот  35 г/л, Калій K2O 20 г/л", "unit": "л", "quantity": 256.8, "term": "2026-04-20", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 28, "name": "Гуміфілд Форте БРІКС", "ingredient": "", "unit": "л", "quantity": 59.8, "term": "2026-04-20", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 29, "name": "Дезарал ", "ingredient": "Карбендазим 500 г/л, ", "unit": "л", "quantity": 179.4, "term": "2026-04-10", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 30, "name": "Зіль", "ingredient": "органосілікон, модифікована органічна масляна сполука", "unit": "л", "quantity": 97.4, "term": "2026-04-20", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 31, "name": "Інгібітор уреази N-STAB", "ingredient": "РК, NBPT 267г/л (n-бутилтіофосфортриамід)", "unit": "л", "quantity": 195.6818182, "term": "2026-03-10", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 32, "name": "Кайліс", "ingredient": "Аклоніфен, 600 г/л", "unit": "л", "quantity": 486.0, "term": "2026-04-20", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 33, "name": "КАС-32", "ingredient": "", "unit": "т", "quantity": 331.21, "term": "2026-03-10", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 34, "name": "Квантум - Хелат Цинку 117 EDTА", "ingredient": "Zn – 11,7% (117 г/л).", "unit": "л", "quantity": 274.4, "term": "2026-04-01", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 35, "name": "Клаттер", "ingredient": "Кломазон, 480 г/л", "unit": "л", "quantity": 43.4, "term": "2026-05-01", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 36, "name": "Клінер", "ingredient": "Прометрин 500 г/л", "unit": "л", "quantity": 325.5, "term": "2026-04-25", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 37, "name": "Конкур", "ingredient": "метрибузин 700 г/л", "unit": "кг", "quantity": 75.95, "term": "2026-04-25", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 38, "name": "Кораген", "ingredient": "Хлорантраніліпрол – 200 г/л", "unit": "л", "quantity": 51.45, "term": "2026-07-25", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 39, "name": "Манзат ВГ ", "ingredient": "Манкоцеб", "unit": "л", "quantity": 202.5, "term": "2026-07-10", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 40, "name": "Медакс Топ", "ingredient": "300 г/л Мепікват-хлорид, 50 г/л Прогексадіон кальцію", "unit": "л", "quantity": 96.0, "term": "2026-04-25", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 41, "name": "Медісон", "ingredient": "протіоконазол 175 г/л, трифлоксістробін 88 г/л", "unit": "л", "quantity": 94.5, "term": "2026-07-10", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 42, "name": "Медян екстра", "ingredient": "хлорокис міді, 350 г/л", "unit": "л", "quantity": 918.0, "term": "2026-07-10", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 43, "name": "Меланж БТ", "ingredient": "Азоксистробін, 230 г/л, Протіоконазол, 220 г/л", "unit": "л", "quantity": 82.8, "term": "2026-05-01", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 44, "name": "Меро®", "ingredient": "ріпаково-метиловий ефір 810 г/л", "unit": "л", "quantity": 297.0, "term": "2026-05-20", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 45, "name": "Метакса", "ingredient": "Тіаметоксам, 350 г/л", "unit": "л", "quantity": 102.005, "term": "2026-02-20", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 46, "name": "МІРАВІС® 200 SC, к. с.", "ingredient": "200 г/л Адепідин", "unit": "л", "quantity": 554.625, "term": "2026-06-01", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 47, "name": "Моддус 250 EC", "ingredient": "трінексапак-етил, 250г/л", "unit": "л", "quantity": 438.75, "term": "2026-04-01", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 48, "name": "Монокалій фосфат MКР 0-52-34", "ingredient": "", "unit": "кг", "quantity": 675.0, "term": "2026-07-01", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 49, "name": "Нікофур, ВГ", "ingredient": "нікосульфурон, 750 г/кг", "unit": "кг", "quantity": 17.15, "term": "2026-04-01", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 50, "name": "ОКТАНТ ТУРБО", "ingredient": "тіаметоксам, 141 г/л + лямбда-цигалотрин, 106 г/л", "unit": "л", "quantity": 229.5, "term": "2026-05-20", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 51, "name": "ОЛЕМІКС® 84, КЕ", "ingredient": "мінеральна олія, 84% + ПАР, 16%", "unit": "л", "quantity": 959.3, "term": "2026-04-15", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 52, "name": "Осіріс® Про", "ingredient": "50 г/л Ревісол® (мефентрифлуконазол), 100 г/л протіоконазол", "unit": "л", "quantity": 739.5, "term": "2026-06-01", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 53, "name": "Піктор", "ingredient": "200 г/л Димоксистробін, 200 г/л Боскалід", "unit": "л", "quantity": 422.4, "term": "2026-05-01", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 54, "name": "ПРЕМАКС", "ingredient": "", "unit": "л", "quantity": 22.0, "term": "2026-04-15", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 55, "name": "Пріаксор", "ingredient": "Ксеміум (флуксапіроксад, 75 г/л) + піраклостробін (150 г/л)", "unit": "л", "quantity": 369.75, "term": "2026-04-25", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 56, "name": "Проматріс, КС", "ingredient": "тербутилазин, 500 г/л", "unit": "кг", "quantity": 514.5, "term": "2026-05-01", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 57, "name": "РЕГЛОН ЕЙР 200 SL, РК", "ingredient": "200 г/л Дикват іону", "unit": "л", "quantity": 911.25, "term": "", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 58, "name": "Рекс Дуо", "ingredient": "187 г/л Епоксиконазол, 310 г/л Тіофанат-метил", "unit": "л", "quantity": 94.5, "term": "2026-07-10", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 59, "name": "Рекс Плюс", "ingredient": "84 г/л Епоксиконазол, 250 г/л Фенпропіморф", "unit": "л", "quantity": 313.5, "term": "2026-04-25", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 60, "name": "Ретацел 720", "ingredient": "Хлормекват хлорид: 720 г/л", "unit": "л", "quantity": 41.4, "term": "2026-04-10", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 61, "name": "Ркд 5:20:5", "ingredient": "", "unit": "л", "quantity": 28380.0, "term": "2026-04-10", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 62, "name": "СЕЗАР ", "ingredient": "біфентрин – 100 г/л", "unit": "л", "quantity": 16.875, "term": "2026-05-01", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 63, "name": "Сінтак", "ingredient": "Гекситіазокс, 204 г/л + абамектин, 36 г/л", "unit": "л", "quantity": 43.4, "term": "2026-07-10", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 64, "name": "Сора-Нет", "ingredient": "Пропізохлор, 720 г/л.", "unit": "л", "quantity": 325.5, "term": "2026-04-25", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 65, "name": "СПІРАЛЕ", "ingredient": "375 г/л Фенпропідин 100 г/л Дифеноконазол", "unit": "л", "quantity": 135.0, "term": "2026-07-10", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 66, "name": "Старане Преміум 330", "ingredient": "Флуроксипір, 330 г/л", "unit": "л", "quantity": 219.8, "term": "2026-04-20", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 67, "name": "Старк ", "ingredient": "Азоксистробін, 250 г/л", "unit": "л", "quantity": 373.2, "term": "2026-04-20", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 68, "name": "СТЕДІС EC, КЕ", "ingredient": "ПРОТІОКОНАЗОЛ, 480 Г/Л", "unit": "л", "quantity": 287.15, "term": "2026-05-01", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 69, "name": "Стелавіт", "ingredient": "топремизон 50г/л", "unit": "л", "quantity": 343.0, "term": "2026-04-01", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 70, "name": "Сульфат цинку 7водневий", "ingredient": "", "unit": "кг", "quantity": 3430.0, "term": "2026-03-15", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 71, "name": "Тілт", "ingredient": "250 г/л Пропіконазол", "unit": "л", "quantity": 67.5, "term": "2026-07-10", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 72, "name": "Тіосульфат амонію", "ingredient": "", "unit": "т", "quantity": 6.86, "term": "2026-05-20", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 73, "name": "Турбо (сульфат амонію)", "ingredient": "сульфат амонію", "unit": "кг", "quantity": 96.0, "term": "", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 74, "name": "Флумет", "ingredient": "флуметсулам, 800", "unit": "кг", "quantity": 2.604, "term": "2026-05-01", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 75, "name": "ФОЛІКУР 250 EW", "ingredient": "тебуконазол 250 г/л, КЕ", "unit": "л", "quantity": 1056.9, "term": "2026-04-20", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 76, "name": "Фунгіцид Діферент Протект, КЕ", "ingredient": "250 г/л Дифеноконазол ", "unit": "л", "quantity": 18.3612, "term": "2026-02-20", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 77, "name": "Фуфанон", "ingredient": "Малатіон  570 г/л", "unit": "л", "quantity": 299.0, "term": "2026-04-10", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 78, "name": "Фюзілад Форте 150", "ingredient": "150 г/л Флуазифоп–П–бутил", "unit": "л", "quantity": 622.0, "term": "2026-05-01", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 79, "name": "Хармоні ", "ingredient": "Тифенсульфурон-метил 750 г/кг", "unit": "кг", "quantity": 4.34, "term": "2026-05-01", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 80, "name": "Церкоштеф", "ingredient": "Дифеноконазол, 250 г/л + карбендазим, 250 г/л", "unit": "л", "quantity": 311.0, "term": "2026-04-20", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 81, "name": "Церон", "ingredient": "етефон 480 г/л", "unit": "л", "quantity": 673.5, "term": "2026-05-01", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 82, "name": "Челендж®", "ingredient": "Аклоніфен, 600 г/л", "unit": "л", "quantity": 526.5, "term": "2026-04-20", "min_pre": null, "min_2080": null, "min_easy": null}, {"id": 83, "name": "CROPMAX ", "ingredient": "Амінокислоти: 2%, Макроелементи: N-2000 мг/л, Р-4000 мг/л, К-200 мг/л, Мікроелементи: Fe-220 мг/л, Mg — 550 мг/л, Zn — 49 мг/л, Cu — 35 мг/л, Mn-54 мг/л, B — 10 мг/л, Ca — 10 мг/л, Mo — 10 мг/л, Co — 10 мг/л, Ni-10 мг/л", "unit": "л", "quantity": 793.0535, "term": "2026-06-10", "min_pre": null, "min_2080": null, "min_easy": null}];
@@ -600,15 +638,16 @@ function renderHeroStats() {
   const tK=LOTS.filter(l=>l.unit==='кг').reduce((s,l)=>s+l.quantity,0);
   const tT=LOTS.filter(l=>l.unit==='т').reduce((s,l)=>s+l.quantity,0);
   const wO=LOTS.filter(l=>l.min_pre||l.min_2080||l.min_easy).length;
+  const h=IS_AUTH?'':'auth-hidden';
   const stats=[
-    {num:total,label:'Всього лотів',icon:'📦'},
-    {num:formatNum(tL),label:'Літрів',icon:'💧'},
-    {num:formatNum(tK),label:'Кілограмів',icon:'⚖️'},
-    {num:formatNum(tT),label:'Тонн',icon:'🏗'},
-    {num:wO,label:'З пропозиціями',icon:'📊'},
+    {num:total,label:'Всього лотів',icon:'📦',hide:''},
+    {num:formatNum(tL),label:'Літрів',icon:'💧',hide:h},
+    {num:formatNum(tK),label:'Кілограмів',icon:'⚖️',hide:h},
+    {num:formatNum(tT),label:'Тонн',icon:'🏗',hide:h},
+    {num:wO,label:'З пропозиціями',icon:'📊',hide:h},
   ];
   document.getElementById('heroStats').innerHTML=stats.map(s=>`
-    <div class="stat"><div class="stat-num">${s.num}</div>
+    <div class="stat ${s.hide}"><div class="stat-num">${s.num}</div>
     <div class="stat-label">${s.label}</div><div class="stat-icon">${s.icon}</div></div>`).join('');
 }
 
@@ -666,11 +705,11 @@ function renderTable(changedIds) {
     return `<tr>
       <td class="lot-id">${l.id}</td><td class="lot-name">${l.name}</td>
       <td class="ingredient">${l.ingredient||'—'}</td><td class="unit">${l.unit}</td>
-      <td class="quantity">${formatNum(l.quantity)}</td>
+      <td class="quantity${IS_AUTH?'':' auth-hidden'}">${formatNum(l.quantity)}</td>
       <td><span class="term-badge ${tc}">${termD}</span></td>
-      <td class="price ${l.min_pre?'has-value':''}${flash}">${l.min_pre?formatPrice(l.min_pre):'—'}</td>
-      <td class="price ${l.min_2080?'has-value':''}${flash}">${l.min_2080?formatPrice(l.min_2080):'—'}</td>
-      <td class="price ${l.min_easy?'has-value':''}${flash}">${l.min_easy?formatPrice(l.min_easy):'—'}</td>
+      <td class="price${IS_AUTH?'':' auth-hidden'} ${l.min_pre?'has-value':''}${flash}">${l.min_pre?formatPrice(l.min_pre):'—'}</td>
+      <td class="price${IS_AUTH?'':' auth-hidden'} ${l.min_2080?'has-value':''}${flash}">${l.min_2080?formatPrice(l.min_2080):'—'}</td>
+      <td class="price${IS_AUTH?'':' auth-hidden'} ${l.min_easy?'has-value':''}${flash}">${l.min_easy?formatPrice(l.min_easy):'—'}</td>
       <td class="action"><a href="${BOT_URL}${l.id}" target="_blank" class="btn-offer">➕ Подати</a></td></tr>`;
   }).join('');
   document.querySelectorAll('thead th').forEach(th=>{
@@ -696,10 +735,149 @@ const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.tar
 document.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
 
 // ============================================================================
+// AUTH - перевірка ЄДРПОУ
+// ============================================================================
+function loadAuthData(callback) {
+  var cbName = 'authCb_' + Date.now();
+  var timeout = setTimeout(function() {
+    delete window[cbName];
+    console.log('[AUTH] Timeout loading auth sheet');
+    callback([]);
+  }, 10000);
+
+  window[cbName] = function(response) {
+    clearTimeout(timeout);
+    delete window[cbName];
+    try {
+      var jsonStr = response ? response.toString() : '';
+      // gviz returns: google.visualization.Query.setResponse({...})
+      // but with responseHandler it's: cbName({...})
+    } catch(e) {}
+    callback([]);
+  };
+
+  // Override to parse gviz response
+  var script = document.createElement('script');
+  script.onerror = function() { clearTimeout(timeout); callback([]); };
+  
+  var url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID
+    + '/gviz/tq?tqx=out:json;responseHandler:' + cbName
+    + '&sheet=' + encodeURIComponent(AUTH_SHEET_NAME)
+    + '&headers=0';
+
+  // Need to handle the response properly
+  window[cbName] = function(resp) {
+    clearTimeout(timeout);
+    try {
+      var scEl = document.querySelector('script[src*="auth"]');
+      if (scEl) scEl.remove();
+    } catch(e) {}
+    
+    var companies = [];
+    try {
+      var table = resp.table;
+      if (table && table.rows) {
+        for (var i = 0; i < table.rows.length; i++) {
+          var cells = table.rows[i].c;
+          if (!cells || !cells[0]) continue;
+          var val = cells[0].v;
+          if (val !== null && val !== undefined && String(val).trim() !== '') {
+            var edrpou = String(val).replace(/\.0$/, '').trim();
+            // Спробуємо дістати назву компанії (колонка B, якщо є)
+            var name = '';
+            if (cells.length > 1 && cells[1] && cells[1].v) {
+              name = String(cells[1].v).trim();
+            }
+            companies.push({ edrpou: edrpou, name: name });
+          }
+        }
+      }
+    } catch(e) {
+      console.log('[AUTH] Parse error:', e);
+    }
+    console.log('[AUTH] Loaded ' + companies.length + ' companies');
+    callback(companies);
+  };
+
+  script.src = url;
+  document.head.appendChild(script);
+}
+
+function checkAuth(edrpou) {
+  var clean = String(edrpou).replace(/\s/g, '').replace(/\.0$/, '');
+  for (var i = 0; i < AUTH_COMPANIES.length; i++) {
+    if (AUTH_COMPANIES[i].edrpou === clean) {
+      return AUTH_COMPANIES[i];
+    }
+  }
+  return null;
+}
+
+function applyAuth() {
+  // Заголовки таблиці
+  document.querySelectorAll('th.auth-col').forEach(function(th) {
+    th.classList.toggle('auth-hidden', !IS_AUTH);
+  });
+  // Банери
+  document.getElementById('authBanner').style.display = IS_AUTH ? 'none' : 'block';
+  document.getElementById('authOk').style.display = IS_AUTH ? 'block' : 'none';
+  // Перемалювати
+  renderHeroStats();
+  renderTable();
+}
+
+function doLogin(edrpou) {
+  var company = checkAuth(edrpou);
+  if (company) {
+    IS_AUTH = true;
+    var displayName = company.name || ('ЄДРПОУ: ' + company.edrpou);
+    document.getElementById('authCompanyName').textContent = displayName;
+    document.getElementById('authError').style.display = 'none';
+    try { sessionStorage.setItem('tender_auth', edrpou); } catch(e) {}
+    applyAuth();
+    return true;
+  } else {
+    document.getElementById('authError').style.display = 'block';
+    return false;
+  }
+}
+
+function doLogout() {
+  IS_AUTH = false;
+  try { sessionStorage.removeItem('tender_auth'); } catch(e) {}
+  document.getElementById('authInput').value = '';
+  applyAuth();
+}
+
+// Auth UI listeners
+document.getElementById('authBtn').addEventListener('click', function() {
+  var val = document.getElementById('authInput').value.trim();
+  if (val.length === 8 && /^\d+$/.test(val)) doLogin(val);
+  else document.getElementById('authError').style.display = 'block';
+});
+document.getElementById('authInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') document.getElementById('authBtn').click();
+});
+document.getElementById('authLogout').addEventListener('click', doLogout);
+
+// ============================================================================
 // INIT
 // ============================================================================
 async function init() {
   const ids = await fetchSheetData();
+  
+  // Завантажуємо список учасників для авторизації
+  loadAuthData(function(companies) {
+    AUTH_COMPANIES = companies;
+    // Перевіряємо збережену сесію або URL параметр
+    var saved = '';
+    try { saved = sessionStorage.getItem('tender_auth') || ''; } catch(e) {}
+    var urlAuth = new URLSearchParams(window.location.search).get('auth') || '';
+    if (urlAuth) doLogin(urlAuth);
+    else if (saved) doLogin(saved);
+    else applyAuth();
+  });
+
   renderMeta(); renderHeroStats(); renderTimeline(); renderUnitChips(); renderTable(ids);
   const loader=document.getElementById('loadingOverlay');
   loader.classList.add('hide'); setTimeout(()=>loader.remove(),600);
