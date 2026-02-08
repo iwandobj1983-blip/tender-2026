@@ -211,6 +211,7 @@ td.action{text-align:center;white-space:nowrap}
   background:var(--accent);color:#fff;text-decoration:none;transition:all .2s;white-space:nowrap;
 }
 .btn-offer:hover{background:var(--accent2);transform:scale(1.05);color:#fff}
+.mobile-btn{display:none;align-items:center;gap:.25rem;padding:.3rem .7rem;border-radius:8px;font-size:.73rem;font-weight:600;background:var(--accent);color:#fff;text-decoration:none;white-space:nowrap}
 
 .no-results{text-align:center;padding:3rem;color:var(--text3);font-size:.95rem}
 
@@ -247,6 +248,10 @@ td.action{text-align:center;white-space:nowrap}
   .table-bg-logo{width:180px;height:180px}
   .countdown-bar{flex-wrap:wrap}
   .countdown-bar .date-info{margin-left:0;width:100%}
+  /* Ховаємо колонку Дія на мобільному */
+  th.action-col, td.action{display:none}
+  /* Показуємо кнопку під назвою */
+  .mobile-btn{display:inline-flex !important;margin-top:.4rem}
 }
 .fade-in{opacity:0;transform:translateY(16px);transition:all .5s cubic-bezier(.16,1,.3,1)}
 .fade-in.visible{opacity:1;transform:translateY(0)}
@@ -326,7 +331,7 @@ td.action{text-align:center;white-space:nowrap}
           <th data-sort="min_pre" class="auth-col auth-hidden">Передоплата<span class="sort-arrow">▲</span></th>
           <th data-sort="min_2080" class="auth-col auth-hidden">20/80<span class="sort-arrow">▲</span></th>
           <th data-sort="min_easy" class="auth-col auth-hidden">Легко<span class="sort-arrow">▲</span></th>
-          <th>Дія</th>
+          <th class="action-col">Дія</th>
         </tr></thead>
         <tbody id="lotsBody"></tbody>
       </table>
@@ -703,7 +708,7 @@ function renderTable(changedIds) {
     const termD=l.term?l.term.split('-').reverse().join('.'):'—';
     const flash=changedIds.includes(l.id)?' price-updated':'';
     return `<tr>
-      <td class="lot-id">${l.id}</td><td class="lot-name">${l.name}</td>
+      <td class="lot-id">${l.id}</td><td class="lot-name">${l.name}<br><a href="${BOT_URL}${l.id}" target="_blank" class="mobile-btn">➕ Подати</a></td>
       <td class="ingredient">${l.ingredient||'—'}</td><td class="unit">${l.unit}</td>
       <td class="quantity${IS_AUTH?'':' auth-hidden'}">${formatNum(l.quantity)}</td>
       <td><span class="term-badge ${tc}">${termD}</span></td>
