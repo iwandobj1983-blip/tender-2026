@@ -195,6 +195,8 @@ td.price.has-value{color:var(--accent);font-weight:600}
 .auth-btn{padding:.6rem 1.2rem;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:.95rem;cursor:pointer;font-weight:600}
 .auth-btn:hover{background:#15803d}
 .auth-error{color:#dc2626;font-size:.85rem;margin-top:.5rem;display:none}
+.auth-register{display:inline-flex;align-items:center;gap:.4rem;margin-top:.7rem;padding:.5rem 1.2rem;background:#2AABEE;color:#fff;border-radius:10px;font-size:.9rem;font-weight:600;text-decoration:none;transition:all .2s}
+.auth-register:hover{background:#229ED9;transform:scale(1.03);color:#fff}
 .auth-success{background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:2px solid #22c55e;border-radius:16px;padding:1rem 1.5rem;margin:1rem 0;text-align:center;display:none}
 .auth-success .name{color:var(--accent);font-weight:700}
 .auth-logout{color:#78716c;font-size:.85rem;cursor:pointer;text-decoration:underline;margin-left:.5rem}
@@ -296,6 +298,7 @@ td.action{text-align:center;white-space:nowrap}
       <button id="authBtn" class="auth-btn">🔓 Увійти</button>
     </div>
     <div class="auth-error" id="authError">❌ ЄДРПОУ не знайдено серед учасників тендеру</div>
+    <a href="https://t.me/Mykulin_bot?start=register" target="_blank" class="auth-register" id="authRegister" style="display:none">🤖 Зареєструватися в тендері</a>
   </div>
 </div>
 <div class="section" id="authOk" style="display:none">
@@ -838,11 +841,13 @@ function doLogin(edrpou) {
     var displayName = company.name || ('ЄДРПОУ: ' + company.edrpou);
     document.getElementById('authCompanyName').textContent = displayName;
     document.getElementById('authError').style.display = 'none';
+    document.getElementById('authRegister').style.display = 'none';
     try { sessionStorage.setItem('tender_auth', edrpou); } catch(e) {}
     applyAuth();
     return true;
   } else {
     document.getElementById('authError').style.display = 'block';
+    document.getElementById('authRegister').style.display = 'inline-flex';
     return false;
   }
 }
@@ -858,7 +863,7 @@ function doLogout() {
 document.getElementById('authBtn').addEventListener('click', function() {
   var val = document.getElementById('authInput').value.trim();
   if (val.length === 8 && /^\d+$/.test(val)) doLogin(val);
-  else document.getElementById('authError').style.display = 'block';
+  else { document.getElementById('authError').style.display = 'block'; document.getElementById('authRegister').style.display = 'inline-flex'; }
 });
 document.getElementById('authInput').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') document.getElementById('authBtn').click();
