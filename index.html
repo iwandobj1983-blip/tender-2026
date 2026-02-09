@@ -333,7 +333,7 @@ td.action{text-align:center;white-space:nowrap}
           <th data-sort="term">Термін<span class="sort-arrow">▲</span></th>
           <th data-sort="min_pre" class="auth-col auth-hidden">Передоплата<span class="sort-arrow">▲</span></th>
           <th data-sort="min_2080" class="auth-col auth-hidden">20/80<span class="sort-arrow">▲</span></th>
-          <th data-sort="min_easy" class="auth-col auth-hidden">Легко<span class="sort-arrow">▲</span></th>
+          <th data-sort="min_easy" class="auth-col auth-hidden">Партнерська<span class="sort-arrow">▲</span></th>
           <th class="action-col">Дія</th>
         </tr></thead>
         <tbody id="lotsBody"></tbody>
@@ -520,7 +520,7 @@ function fetchSheetData() {
           var h = headers[hi];
           if (h.includes('передопла') || (h.includes('мін') && h.includes('перед'))) idx.pre = hi;
           else if (h.includes('20/80') || h.includes('20_80') || h.includes('мін_20')) idx.p2080 = hi;
-          else if (h.includes('легко') || h.includes('мін_легко')) idx.easy = hi;
+          else if (h.includes('легко') || h.includes('мін_легко') || h.includes('партнер')) idx.easy = hi;
         }
         if (idx.id === -1) idx.id = 0;
 
@@ -528,7 +528,7 @@ function fetchSheetData() {
         // Якщо ключові колонки не знайдені (через merged cells в Google Sheets),
         // використовуємо фіксовані позиції зі структури таблиці:
         // 0:lot_id  1:Назва  2:Діюча  3:Од.вим  4:Потреба  5:Термін
-        // 6:мін_передоплата  7:мін_20/80  8:мін_легко  9:дія
+        // 6:мін_передоплата  7:мін_20/80  8:мін_партнерська  9:дія
         if (idx.qty === -1 && numCols >= 6) {
           console.log('[DASH] Using positional fallback for columns');
           idx.qty = 4;
