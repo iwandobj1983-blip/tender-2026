@@ -271,6 +271,23 @@ textarea.form-input{resize:vertical;min-height:70px}
   </div>
 </div>
 
+<!-- ═══════════ IDENTIFY USER ═══════════ -->
+<div class="screen" id="screenIdentify">
+  <div class="login-wrap">
+    <div class="login-box">
+      <h2>Хто <span>ви?</span></h2>
+      <p id="identifyCompany">Компанія</p>
+      <input type="text" class="login-input" id="identifyName" placeholder="Прізвище Ім'я По-батькові"
+             style="letter-spacing:0;font-family:inherit;font-size:.9rem"
+             onkeypress="if(event.key==='Enter')doIdentify()">
+      <button class="login-btn" id="btnIdentify" onclick="doIdentify()">Продовжити</button>
+      <div class="login-error" id="identifyError"></div>
+      <p class="login-hint">Введіть ПІБ як в системі. Якщо вас немає — буде створено запит на реєстрацію.</p>
+      <button style="margin-top:.8rem;background:none;border:none;color:var(--text3);font-size:.75rem;cursor:pointer;font-family:inherit;text-decoration:underline" onclick="backToLogin()">← Інший ЄДРПОУ</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════ MY OFFERS ═══════════ -->
 <div class="screen" id="screenOffers">
   <div class="main">
@@ -345,7 +362,7 @@ textarea.form-input{resize:vertical;min-height:70px}
 // ============================================================================
 var API_URL = 'https://script.google.com/macros/s/AKfycbz4vr_oSE0e8JqIes_MvM8H0Ei4j_Mf7iRkVyqojSKlSPuUjGffQBxxl3_eWza8z1CMsg/exec';
 
-var session = { token:null, company_id:null, company_name:null, lots:[], offers:[] };
+var session = { token:null, company_id:null, company_name:null, user_name:null, lots:[], offers:[] };
 
 // ============================================================================
 // AUTH
@@ -363,8 +380,8 @@ function doLogin() {
     session.token = data.token;
     session.company_id = data.company_id;
     session.company_name = data.company_name;
-    try { sessionStorage.setItem('cabinet_session', JSON.stringify(session)); } catch(e){}
-    enterApp();
+    // Перехід до ідентифікації співробітника
+    showIdentifyScreen();
   });
 }
 
@@ -374,22 +391,73 @@ function showError(msg) {
 }
 
 function logout() {
-  session = {token:null,company_id:null,company_name:null,lots:[],offers:[]};
+  session = {token:null,company_id:null,company_name:null,user_name:null,lots:[],offers:[]};
   try { sessionStorage.removeItem('cabinet_session'); } catch(e){}
   document.getElementById('screenLogin').classList.add('active');
   document.getElementById('screenOffers').classList.remove('active');
   document.getElementById('screenLots').classList.remove('active');
+  document.getElementById('screenIdentify').classList.remove('active');
   document.getElementById('mainNav').style.display = 'none';
   document.getElementById('headerUser').style.display = 'none';
   document.getElementById('loginEdrpou').value = '';
   document.getElementById('loginError').style.display = 'none';
 }
 
+function showIdentifyScreen() {
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
+  document.getElementById('screenIdentify').classList.add('active');
+  document.getElementById('identifyCompany').textContent = session.company_name || session.company_id;
+  document.getElementById('identifyError').style.display = 'none';
+  document.getElementById('identifyName').value = '';
+  document.getElementById('identifyName').focus();
+}
+
+function doIdentify() {
+  var name = document.getElementById('identifyName').value.trim();
+  if (!name || name.length < 3) {
+    document.getElementById('identifyError').textContent = 'Введіть ПІБ (мінімум 3 символи)';
+    document.getElementById('identifyError').style.display = 'block';
+    return;
+  }
+
+  var btn = document.getElementById('btnIdentify');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+
+  apiCall('identify_user', {user_name:name}, function(data) {
+    btn.disabled = false; btn.textContent = 'Продовжити';
+    if (!data.ok) {
+      var errEl = document.getElementById('identifyError');
+      errEl.textContent = data.error || 'Помилка';
+      errEl.style.display = 'block';
+      if (data.pending && data.registered) {
+        errEl.style.color = 'var(--accent)';
+      } else if (data.pending) {
+        errEl.style.color = 'var(--gold)';
+      } else {
+        errEl.style.color = 'var(--red)';
+      }
+      return;
+    }
+    session.user_name = data.user_name;
+    try { sessionStorage.setItem('cabinet_session', JSON.stringify(session)); } catch(e){}
+    enterApp();
+  });
+}
+
+function backToLogin() {
+  session.token = null; session.company_id = null; session.company_name = null;
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
+  document.getElementById('screenLogin').classList.add('active');
+  document.getElementById('loginError').style.display = 'none';
+}
+
 function enterApp() {
-  document.getElementById('headerCompany').textContent = session.company_name;
+  var headerText = session.company_name;
+  if (session.user_name) headerText += ' — ' + session.user_name;
+  document.getElementById('headerCompany').textContent = headerText;
   document.getElementById('headerUser').style.display = 'flex';
   document.getElementById('mainNav').style.display = 'flex';
-  document.getElementById('screenLogin').classList.remove('active');
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
   switchTab('offers');
   loadLots();
   loadMyOffers();
@@ -405,7 +473,16 @@ function enterApp() {
   }
   try {
     var saved = sessionStorage.getItem('cabinet_session');
-    if (saved) { var s = JSON.parse(saved); if(s&&s.token){session=s;enterApp();} }
+    if (saved) {
+      var s = JSON.parse(saved);
+      if (s && s.token && s.user_name) {
+        session = s;
+        enterApp();
+      } else if (s && s.token) {
+        session = s;
+        showIdentifyScreen();
+      }
+    }
   } catch(e){}
 })();
 
