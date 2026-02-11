@@ -126,6 +126,12 @@ body{font-family:'e-Ukraine',system-ui,sans-serif;background:var(--bg);color:var
 .price-label{font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.3px}
 .price-val{font-family:'JetBrains Mono',monospace;font-size:.95rem;font-weight:600;color:var(--accent);margin-top:.1rem}
 .price-val.empty{color:var(--text3)}
+.price-diff{font-size:.65rem;font-weight:600;margin-top:.15rem}
+.price-diff.best{color:#16a34a}
+.price-diff.equal{color:#16a34a}
+.price-diff.close{color:#b45309}
+.price-diff.far{color:#dc2626}
+.price-diff.nodata{color:var(--text3);font-weight:400}
 .card-actions{display:flex;gap:.5rem;margin-top:.8rem}
 
 /* ── LOTS GRID ── */
@@ -337,7 +343,7 @@ textarea.form-input{resize:vertical;min-height:70px}
 // ============================================================================
 // CONFIG — Замініть на URL вашого WebApp
 // ============================================================================
-var API_URL = 'https://script.google.com/macros/s/AKfycbz4vr_oSE0e8JqIes_MvM8H0Ei4j_Mf7iRkVyqojSKlSPuUjGffQBxxl3_eWza8z1CMsg/exec';
+var API_URL = 'YOUR_WEBAPP_URL_HERE';
 
 var session = { token:null, company_id:null, company_name:null, lots:[], offers:[] };
 
@@ -507,18 +513,36 @@ function renderOffers(offers) {
       +(o.active_ingredient?'<div class="card-dr">🧪 '+esc(o.active_ingredient)+'</div>':'')
       +(o.comment?'<div class="card-dr">💬 '+esc(o.comment)+'</div>':'')
       +'<div class="prices">'
-      +priceCell('Передоплата',o.price_prepayment)
-      +priceCell('20/80',o.price_2080)
-      +priceCell('Партнерська',o.price_easy)
+      +priceCell('Передоплата',o.price_prepayment,lot.min_pre)
+      +priceCell('20/80',o.price_2080,lot.min_2080)
+      +priceCell('Партнерська',o.price_easy,lot.min_easy)
       +'</div>'
       +(st!=='Архів'?'<div class="card-actions"><button class="btn btn-outline btn-sm" onclick="openEditOffer(\''+esc(o.offer_id)+'\')">✏️ Редагувати</button></div>':'')
       +'</div>';
   }).join('');
 }
 
-function priceCell(label,val){
+function priceCell(label,val,minPrice){
   var v = val?parseFloat(val).toFixed(2)+' $':'—';
-  return '<div class="price-item"><div class="price-label">'+label+'</div><div class="price-val'+(val?'':' empty')+'">'+v+'</div></div>';
+  var diff = '';
+  if (val && parseFloat(val) > 0) {
+    var myP = parseFloat(val);
+    if (minPrice && parseFloat(minPrice) > 0) {
+      var minP = parseFloat(minPrice);
+      if (Math.abs(myP - minP) < 0.005) {
+        diff = '<div class="price-diff best">🏆 Найкраща</div>';
+      } else if (myP < minP) {
+        diff = '<div class="price-diff best">🏆 Найкраща</div>';
+      } else {
+        var pct = ((myP - minP) / minP * 100).toFixed(1);
+        var cls = parseFloat(pct) <= 5 ? 'close' : 'far';
+        diff = '<div class="price-diff '+cls+'">+'+pct+'% від мін.</div>';
+      }
+    } else {
+      diff = '<div class="price-diff nodata">немає конкурентів</div>';
+    }
+  }
+  return '<div class="price-item"><div class="price-label">'+label+'</div><div class="price-val'+(val?'':' empty')+'">'+v+'</div>'+diff+'</div>';
 }
 
 // ============================================================================
