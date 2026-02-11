@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Кабінет учасника — Тендер 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;600;700&family=e-Ukraine:wght@300;400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f5f7fa;--surface:#ffffff;--surface2:#f0f2f5;--surface3:#e8ebef;
+  --accent:#16a34a;--accent2:#22c55e;--accent-dim:rgba(22,163,74,.08);
+  --gold:#d97706;--gold-dim:rgba(217,119,6,.06);
+  --red:#dc2626;--red-dim:rgba(220,38,38,.06);
+  --blue:#2563eb;--blue-dim:rgba(37,99,235,.06);
+  --text:#1e293b;--text2:#475569;--text3:#94a3b8;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --radius:12px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-lg:0 4px 16px rgba(0,0,0,.08);
+}
+body{font-family:'e-Ukraine',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── HEADER ── */
+.header{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;box-shadow:var(--shadow);
+}
+.header-left{display:flex;align-items:center;gap:1rem}
+.header-logo{font-family:'Unbounded',sans-serif;font-weight:700;font-size:.95rem;color:var(--text)}
+.header-logo span{color:var(--accent)}
+.back-link{
+  display:inline-flex;align-items:center;gap:.3rem;font-size:.78rem;
+  color:var(--text3);text-decoration:none;padding:.3rem .7rem;
+  border-radius:8px;border:1px solid var(--border);transition:all .2s;
+}
+.back-link:hover{border-color:var(--accent);color:var(--accent)}
+.header-right{display:flex;align-items:center;gap:1rem}
+.company-badge{
+  font-size:.8rem;font-weight:600;color:var(--accent);
+  background:var(--accent-dim);padding:.35rem .9rem;border-radius:100px;
+}
+.btn-logout{
+  font-size:.72rem;color:var(--text3);cursor:pointer;background:none;border:1px solid var(--border);
+  padding:.3rem .7rem;border-radius:8px;font-family:inherit;transition:all .2s;
+}
+.btn-logout:hover{border-color:var(--red);color:var(--red)}
+
+/* ── NAV ── */
+.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;gap:.3rem}
+.nav-tab{
+  padding:.8rem 1.2rem;font-size:.82rem;font-weight:600;color:var(--text3);
+  cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;
+  font-family:inherit;transition:all .2s;
+}
+.nav-tab:hover{color:var(--text2)}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* ── MAIN ── */
+.main{max-width:1100px;margin:0 auto;padding:1.5rem 2rem}
+
+/* ── SCREENS ── */
+.screen{display:none}.screen.active{display:block}
+
+/* ── LOGIN ── */
+.login-wrap{min-height:calc(100vh - 60px);display:flex;align-items:center;justify-content:center}
+.login-box{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:2.5rem;width:100%;max-width:400px;box-shadow:var(--shadow-lg);text-align:center;
+}
+.login-box h2{font-family:'Unbounded',sans-serif;font-size:1.3rem;font-weight:700;margin-bottom:.5rem}
+.login-box h2 span{color:var(--accent)}
+.login-box p{color:var(--text2);font-size:.85rem;margin-bottom:1.5rem}
+.login-input{
+  width:100%;padding:.8rem 1rem;background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--radius);color:var(--text);font-size:1.1rem;font-family:'JetBrains Mono',monospace;
+  text-align:center;letter-spacing:3px;outline:none;transition:all .2s;
+}
+.login-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.login-btn{
+  width:100%;padding:.8rem;margin-top:1rem;border-radius:var(--radius);
+  background:var(--accent);color:#fff;font-size:.9rem;font-weight:600;
+  border:none;cursor:pointer;font-family:inherit;transition:all .2s;
+}
+.login-btn:hover{background:#15803d;transform:translateY(-1px)}
+.login-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.login-hint{font-size:.72rem;color:var(--text3);margin-top:1rem}
+.login-error{color:var(--red);font-size:.82rem;margin-top:.8rem;display:none}
+
+/* ── STATS BAR ── */
+.stats-bar{
+  display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;
+}
+.stat-card{
+  flex:1;min-width:140px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:1rem 1.2rem;box-shadow:var(--shadow);
+}
+.stat-card .num{font-family:'JetBrains Mono',monospace;font-size:1.5rem;font-weight:700;color:var(--accent)}
+.stat-card .label{font-size:.72rem;color:var(--text3);margin-top:.2rem}
+
+/* ── CARDS ── */
+.card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:1.2rem 1.5rem;margin-bottom:.8rem;box-shadow:var(--shadow);transition:all .2s;
+}
+.card:hover{border-color:var(--accent);box-shadow:var(--shadow-lg)}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.5rem}
+.card-title{font-size:.9rem;font-weight:700}
+.card-sub{font-size:.78rem;color:var(--text2);margin-top:.15rem}
+.card-dr{font-size:.75rem;color:var(--text3);margin-bottom:.6rem}
+
+/* ── BADGES ── */
+.badge{
+  display:inline-flex;align-items:center;gap:.3rem;
+  padding:.25rem .7rem;border-radius:100px;font-size:.7rem;font-weight:600;
+}
+.badge-green{background:rgba(22,163,74,.08);color:#16a34a}
+.badge-yellow{background:rgba(234,179,8,.08);color:#b45309}
+.badge-red{background:rgba(220,38,38,.08);color:#dc2626}
+.badge-blue{background:rgba(37,99,235,.08);color:#2563eb}
+
+/* ── PRICES GRID ── */
+.prices{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--border)}
+.price-item{text-align:center}
+.price-label{font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.3px}
+.price-val{font-family:'JetBrains Mono',monospace;font-size:.95rem;font-weight:600;color:var(--accent);margin-top:.1rem}
+.price-val.empty{color:var(--text3)}
+.card-actions{display:flex;gap:.5rem;margin-top:.8rem}
+
+/* ── LOTS GRID ── */
+.lots-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:.8rem}
+.lot-card{cursor:default}
+.lot-id{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--accent);font-weight:600}
+.lot-name{font-size:.85rem;font-weight:600;margin:.2rem 0}
+.lot-footer{display:flex;justify-content:space-between;align-items:center;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--border)}
+.lot-qty{font-size:.75rem;color:var(--text3)}
+
+/* ── BUTTONS ── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:.4rem;
+  padding:.55rem 1.1rem;border-radius:var(--radius);font-size:.8rem;
+  font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .2s;
+}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#15803d;transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-outline{background:transparent;color:var(--text2);border:1px solid var(--border)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-sm{padding:.4rem .8rem;font-size:.72rem}
+.btn-full{width:100%}
+
+/* ── SEARCH ── */
+.search-box{position:relative;margin-bottom:1rem}
+.search-box input{
+  width:100%;padding:.7rem 1rem .7rem 2.4rem;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--radius);font-size:.82rem;
+  font-family:inherit;color:var(--text);outline:none;
+}
+.search-box input:focus{border-color:var(--accent)}
+.search-box::before{content:'🔍';position:absolute;left:.8rem;top:50%;transform:translateY(-50%);font-size:.85rem}
+
+/* ── MODAL ── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.4);
+  display:none;align-items:center;justify-content:center;z-index:1000;padding:1.5rem;
+}
+.modal-overlay.active{display:flex}
+.modal{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:2rem;width:100%;max-width:500px;box-shadow:var(--shadow-lg);max-height:90vh;overflow-y:auto;
+}
+.modal h3{font-family:'Unbounded',sans-serif;font-size:1rem;font-weight:700;margin-bottom:.3rem}
+.modal .modal-sub{font-size:.8rem;color:var(--text2);margin-bottom:1.5rem}
+
+/* ── FORM ── */
+.form-group{margin-bottom:1rem}
+.form-label{display:block;font-size:.72rem;font-weight:600;color:var(--text2);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.3px}
+.form-input{
+  width:100%;padding:.65rem .9rem;background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-size:.85rem;font-family:inherit;outline:none;transition:all .2s;
+}
+.form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.form-input::placeholder{color:var(--text3)}
+textarea.form-input{resize:vertical;min-height:70px}
+.form-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem}
+.form-hint{font-size:.68rem;color:var(--text3);margin-top:.3rem}
+.modal-actions{display:flex;gap:.8rem;margin-top:1.5rem}
+.modal-actions .btn{flex:1}
+
+/* ── SECTION TITLE ── */
+.section-title{
+  font-family:'Unbounded',sans-serif;font-size:.95rem;font-weight:600;
+  margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;
+}
+.section-title::before{content:'';width:3px;height:1em;background:var(--accent);border-radius:2px}
+
+/* ── TOAST ── */
+.toast-container{position:fixed;top:72px;right:1.5rem;z-index:2000}
+.toast{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:.8rem 1.2rem;margin-bottom:.5rem;font-size:.82rem;min-width:260px;
+  box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:.6rem;animation:slideIn .3s ease;
+}
+.toast.success{border-color:var(--accent)}
+.toast.error{border-color:var(--red)}
+@keyframes slideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+
+/* ── EMPTY ── */
+.empty-state{text-align:center;padding:3rem 1.5rem}
+.empty-state .icon{font-size:2.5rem;margin-bottom:.8rem;opacity:.4}
+.empty-state p{color:var(--text2);font-size:.85rem}
+
+/* ── SPINNER ── */
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-state{text-align:center;padding:3rem;color:var(--text2)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:640px){
+  .main{padding:1rem}
+  .header{padding:0 1rem}
+  .nav{padding:0 1rem;overflow-x:auto}
+  .nav-tab{padding:.8rem 1rem;white-space:nowrap}
+  .form-row{grid-template-columns:1fr}
+  .lots-grid{grid-template-columns:1fr}
+  .modal{padding:1.5rem;margin:1rem}
+  .stats-bar{gap:.6rem}
+  .stat-card{min-width:100px;padding:.8rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ HEADER ═══════════ -->
+<header class="header">
+  <div class="header-left">
+    <div class="header-logo">Тендер <span>2026</span></div>
+    <a href="index.html" class="back-link">← Дашборд</a>
+  </div>
+  <div class="header-right" id="headerUser" style="display:none">
+    <span class="company-badge" id="headerCompany"></span>
+    <button class="btn-logout" onclick="logout()">Вийти</button>
+  </div>
+</header>
+
+<!-- ═══════════ NAV ═══════════ -->
+<nav class="nav" id="mainNav" style="display:none">
+  <button class="nav-tab active" data-tab="offers" onclick="switchTab('offers')">📊 Мої пропозиції</button>
+  <button class="nav-tab" data-tab="lots" onclick="switchTab('lots')">📋 Каталог лотів</button>
+</nav>
+
+<!-- ═══════════ LOGIN ═══════════ -->
+<div class="screen active" id="screenLogin">
+  <div class="login-wrap">
+    <div class="login-box">
+      <h2>Кабінет <span>учасника</span></h2>
+      <p>Введіть ЄДРПОУ для доступу до управління пропозиціями</p>
+      <input type="text" class="login-input" id="loginEdrpou" placeholder="00000000" maxlength="10"
+             onkeypress="if(event.key==='Enter')doLogin()">
+      <button class="login-btn" id="btnLogin" onclick="doLogin()">Увійти</button>
+      <div class="login-error" id="loginError"></div>
+      <p class="login-hint">Ваші дані конфіденційні. Ви бачите тільки свої пропозиції.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MY OFFERS ═══════════ -->
+<div class="screen" id="screenOffers">
+  <div class="main">
+    <div class="stats-bar" id="statsBar"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div class="section-title" style="margin-bottom:0">Мої пропозиції</div>
+      <button class="btn btn-outline btn-sm" onclick="loadMyOffers()">🔄 Оновити</button>
+    </div>
+    <div id="offersContainer"><div class="loading-state"><div class="spinner"></div></div></div>
+  </div>
+</div>
+
+<!-- ═══════════ LOTS ═══════════ -->
+<div class="screen" id="screenLots">
+  <div class="main">
+    <div class="section-title">Каталог лотів</div>
+    <div class="search-box">
+      <input type="text" id="lotsSearch" placeholder="Пошук за назвою або ДР..." oninput="filterLots()">
+    </div>
+    <div class="lots-grid" id="lotsGrid"><div class="loading-state"><div class="spinner"></div></div></div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL ═══════════ -->
+<div class="modal-overlay" id="modalOffer">
+  <div class="modal">
+    <h3 id="modalTitle">Нова пропозиція</h3>
+    <p class="modal-sub" id="modalSub"></p>
+    <input type="hidden" id="offerLotId">
+    <input type="hidden" id="offerEditId">
+
+    <div class="form-group">
+      <label class="form-label">Назва препарату *</label>
+      <input type="text" class="form-input" id="offerProduct" placeholder="Назва вашого препарату">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Діюча речовина</label>
+      <input type="text" class="form-input" id="offerIngredient" placeholder="Наприклад: Тіаклоприд — 240 г/л">
+      <p class="form-hint" id="offerDRHint"></p>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Передоплата, $</label>
+        <input type="text" class="form-input" id="offerPricePre" placeholder="0.00" oninput="this.value=this.value.replace(/[^0-9.,]/g,'')">
+      </div>
+      <div class="form-group">
+        <label class="form-label">20/80, $</label>
+        <input type="text" class="form-input" id="offerPrice2080" placeholder="0.00" oninput="this.value=this.value.replace(/[^0-9.,]/g,'')">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Партнерська, $</label>
+        <input type="text" class="form-input" id="offerPriceEasy" placeholder="0.00" oninput="this.value=this.value.replace(/[^0-9.,]/g,'')">
+      </div>
+    </div>
+    <p class="form-hint">Ціни з ПДВ у доларах. Вкажіть хоча б одну ціну.</p>
+    <div class="form-group">
+      <label class="form-label">Коментар</label>
+      <textarea class="form-input" id="offerComment" placeholder="Додаткова інформація (необов'язково)"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Скасувати</button>
+      <button class="btn btn-primary" id="btnSubmit" onclick="submitOffer()">Подати</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+// ============================================================================
+// CONFIG — Замініть на URL вашого WebApp
+// ============================================================================
+var API_URL = 'YOUR_WEBAPP_URL_HERE';
+
+var session = { token:null, company_id:null, company_name:null, lots:[], offers:[] };
+
+// ============================================================================
+// AUTH
+// ============================================================================
+function doLogin() {
+  var edrpou = document.getElementById('loginEdrpou').value.trim();
+  if (!edrpou || edrpou.length < 6) { showError('Введіть коректний ЄДРПОУ'); return; }
+
+  var btn = document.getElementById('btnLogin');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+
+  apiCall('auth', {edrpou:edrpou}, function(data) {
+    btn.disabled = false; btn.textContent = 'Увійти';
+    if (!data.ok) { showError(data.error || 'Помилка авторизації'); return; }
+    session.token = data.token;
+    session.company_id = data.company_id;
+    session.company_name = data.company_name;
+    try { sessionStorage.setItem('cabinet_session', JSON.stringify(session)); } catch(e){}
+    enterApp();
+  });
+}
+
+function showError(msg) {
+  var el = document.getElementById('loginError');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+function logout() {
+  session = {token:null,company_id:null,company_name:null,lots:[],offers:[]};
+  try { sessionStorage.removeItem('cabinet_session'); } catch(e){}
+  document.getElementById('screenLogin').classList.add('active');
+  document.getElementById('screenOffers').classList.remove('active');
+  document.getElementById('screenLots').classList.remove('active');
+  document.getElementById('mainNav').style.display = 'none';
+  document.getElementById('headerUser').style.display = 'none';
+  document.getElementById('loginEdrpou').value = '';
+  document.getElementById('loginError').style.display = 'none';
+}
+
+function enterApp() {
+  document.getElementById('headerCompany').textContent = session.company_name;
+  document.getElementById('headerUser').style.display = 'flex';
+  document.getElementById('mainNav').style.display = 'flex';
+  document.getElementById('screenLogin').classList.remove('active');
+  switchTab('offers');
+  loadLots();
+  loadMyOffers();
+}
+
+// Auto-restore + URL param
+(function(){
+  var urlEdrpou = new URLSearchParams(window.location.search).get('edrpou');
+  if (urlEdrpou) {
+    document.getElementById('loginEdrpou').value = urlEdrpou;
+    doLogin();
+    return;
+  }
+  try {
+    var saved = sessionStorage.getItem('cabinet_session');
+    if (saved) { var s = JSON.parse(saved); if(s&&s.token){session=s;enterApp();} }
+  } catch(e){}
+})();
+
+// ============================================================================
+// NAVIGATION
+// ============================================================================
+function switchTab(tab) {
+  document.querySelectorAll('.nav-tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab===tab)});
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
+  if (tab==='lots') {
+    document.getElementById('screenLots').classList.add('active');
+    if(!session.lots.length) loadLots();
+  } else {
+    document.getElementById('screenOffers').classList.add('active');
+  }
+}
+
+// ============================================================================
+// LOTS
+// ============================================================================
+function loadLots() {
+  var g = document.getElementById('lotsGrid');
+  g.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+  apiCall('lots', {}, function(data){
+    if(!data.ok){g.innerHTML='<div class="empty-state"><p>'+(data.error||'Помилка')+'</p></div>';return;}
+    session.lots = data.lots;
+    renderLots(data.lots);
+  });
+}
+
+function renderLots(lots) {
+  var g = document.getElementById('lotsGrid');
+  if(!lots||!lots.length){g.innerHTML='<div class="empty-state"><div class="icon">📋</div><p>Лоти ще не додані</p></div>';return;}
+  g.innerHTML = lots.map(function(l){
+    return '<div class="card lot-card" data-search="'+esc(l.name+' '+l.active_ingredient).toLowerCase()+'">'
+      +'<div class="lot-id">ЛОТ #'+esc(l.lot_id)+'</div>'
+      +'<div class="lot-name">'+esc(l.name)+'</div>'
+      +(l.active_ingredient?'<div class="card-dr">🧪 '+esc(l.active_ingredient)+'</div>':'')
+      +'<div class="lot-footer"><span class="lot-qty">📊 '+esc(l.quantity)+' '+esc(l.unit)+'</span>'
+      +'<button class="btn btn-primary btn-sm" onclick="openNewOffer(\''+esc(l.lot_id)+'\')">📝 Подати</button></div>'
+      +'</div>';
+  }).join('');
+}
+
+function filterLots(){
+  var q=document.getElementById('lotsSearch').value.toLowerCase();
+  document.querySelectorAll('.lot-card').forEach(function(c){
+    c.style.display=(c.dataset.search||'').indexOf(q)!==-1?'':'none';
+  });
+}
+
+// ============================================================================
+// MY OFFERS
+// ============================================================================
+function loadMyOffers() {
+  var c = document.getElementById('offersContainer');
+  c.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+  apiCall('my_offers', {}, function(data){
+    if(!data.ok){c.innerHTML='<div class="empty-state"><p>'+(data.error||'Помилка')+'</p></div>';return;}
+    session.offers = data.offers;
+    renderStats(data.offers);
+    renderOffers(data.offers);
+  });
+}
+
+function renderStats(offers) {
+  var total = offers.length;
+  var approved = offers.filter(function(o){return o.status==='Затверджено'}).length;
+  var pending = offers.filter(function(o){return o.status==='На розгляді'}).length;
+  var rejected = offers.filter(function(o){return o.status==='Відхилено'}).length;
+  var lots = {};
+  offers.forEach(function(o){lots[o.lot_id]=true});
+  var lotCount = Object.keys(lots).length;
+
+  document.getElementById('statsBar').innerHTML =
+    '<div class="stat-card"><div class="num">'+total+'</div><div class="label">Пропозицій</div></div>'
+    +'<div class="stat-card"><div class="num">'+lotCount+'</div><div class="label">Лотів</div></div>'
+    +'<div class="stat-card"><div class="num" style="color:#16a34a">'+approved+'</div><div class="label">Затверджено</div></div>'
+    +'<div class="stat-card"><div class="num" style="color:#b45309">'+pending+'</div><div class="label">На розгляді</div></div>'
+    +(rejected?'<div class="stat-card"><div class="num" style="color:#dc2626">'+rejected+'</div><div class="label">Відхилено</div></div>':'');
+}
+
+function renderOffers(offers) {
+  var c = document.getElementById('offersContainer');
+  if(!offers||!offers.length){
+    c.innerHTML='<div class="empty-state"><div class="icon">📊</div><p>У вас ще немає пропозицій</p>'
+      +'<button class="btn btn-primary btn-sm" style="margin-top:1rem" onclick="switchTab(\'lots\')">📋 Перейти до лотів</button></div>';
+    return;
+  }
+
+  var lotMap = {}; session.lots.forEach(function(l){lotMap[l.lot_id]=l});
+
+  c.innerHTML = offers.map(function(o){
+    var lot = lotMap[o.lot_id]||{};
+    var badge = '';
+    var st = o.status||'';
+    if(st==='Затверджено') badge='<span class="badge badge-green">✅ Затверджено</span>';
+    else if(st==='Відхилено') badge='<span class="badge badge-red">❌ Відхилено</span>';
+    else if(st==='На розгляді') badge='<span class="badge badge-yellow">⏳ На розгляді</span>';
+    else badge='<span class="badge badge-blue">'+esc(st)+'</span>';
+
+    return '<div class="card offer-card">'
+      +'<div class="card-head"><div><div class="card-title">#'+esc(o.offer_id)+' — '+esc(o.product_name)+'</div>'
+      +'<div class="card-sub">Лот #'+esc(o.lot_id)+': '+esc(lot.name||'')+'</div></div>'+badge+'</div>'
+      +(o.active_ingredient?'<div class="card-dr">🧪 '+esc(o.active_ingredient)+'</div>':'')
+      +(o.comment?'<div class="card-dr">💬 '+esc(o.comment)+'</div>':'')
+      +'<div class="prices">'
+      +priceCell('Передоплата',o.price_prepayment)
+      +priceCell('20/80',o.price_2080)
+      +priceCell('Партнерська',o.price_easy)
+      +'</div>'
+      +(st!=='Архів'?'<div class="card-actions"><button class="btn btn-outline btn-sm" onclick="openEditOffer(\''+esc(o.offer_id)+'\')">✏️ Редагувати</button></div>':'')
+      +'</div>';
+  }).join('');
+}
+
+function priceCell(label,val){
+  var v = val?parseFloat(val).toFixed(2)+' $':'—';
+  return '<div class="price-item"><div class="price-label">'+label+'</div><div class="price-val'+(val?'':' empty')+'">'+v+'</div></div>';
+}
+
+// ============================================================================
+// MODAL
+// ============================================================================
+function openNewOffer(lotId) {
+  var lot = session.lots.find(function(l){return l.lot_id===lotId});
+  if(!lot) return;
+  document.getElementById('modalTitle').textContent = 'Нова пропозиція';
+  document.getElementById('modalSub').textContent = 'Лот #'+lot.lot_id+': '+lot.name;
+  document.getElementById('offerLotId').value = lotId;
+  document.getElementById('offerEditId').value = '';
+  document.getElementById('offerProduct').value = '';
+  document.getElementById('offerIngredient').value = '';
+  document.getElementById('offerPricePre').value = '';
+  document.getElementById('offerPrice2080').value = '';
+  document.getElementById('offerPriceEasy').value = '';
+  document.getElementById('offerComment').value = '';
+  document.getElementById('btnSubmit').textContent = 'Подати пропозицію';
+  document.getElementById('offerDRHint').textContent = lot.active_ingredient?'Вимога: '+lot.active_ingredient:'';
+  document.getElementById('modalOffer').classList.add('active');
+}
+
+function openEditOffer(offerId) {
+  var o = session.offers.find(function(x){return x.offer_id===offerId});
+  if(!o) return;
+  var lot = session.lots.find(function(l){return l.lot_id===o.lot_id})||{};
+  document.getElementById('modalTitle').textContent = 'Редагувати #'+offerId;
+  document.getElementById('modalSub').textContent = 'Лот #'+o.lot_id+': '+(lot.name||'');
+  document.getElementById('offerLotId').value = o.lot_id;
+  document.getElementById('offerEditId').value = offerId;
+  document.getElementById('offerProduct').value = o.product_name||'';
+  document.getElementById('offerIngredient').value = o.active_ingredient||'';
+  document.getElementById('offerPricePre').value = o.price_prepayment||'';
+  document.getElementById('offerPrice2080').value = o.price_2080||'';
+  document.getElementById('offerPriceEasy').value = o.price_easy||'';
+  document.getElementById('offerComment').value = o.comment||'';
+  document.getElementById('btnSubmit').textContent = 'Зберегти зміни';
+  document.getElementById('offerDRHint').textContent = lot.active_ingredient?'Вимога: '+lot.active_ingredient:'';
+  document.getElementById('modalOffer').classList.add('active');
+}
+
+function closeModal(){document.getElementById('modalOffer').classList.remove('active')}
+
+function submitOffer() {
+  var editId = document.getElementById('offerEditId').value;
+  var product = document.getElementById('offerProduct').value.trim();
+  var ingredient = document.getElementById('offerIngredient').value.trim();
+  var pp = document.getElementById('offerPricePre').value.trim();
+  var p2 = document.getElementById('offerPrice2080').value.trim();
+  var pe = document.getElementById('offerPriceEasy').value.trim();
+  var comment = document.getElementById('offerComment').value.trim();
+
+  if(!product){showToast('Введіть назву препарату','error');return}
+  if(!pp&&!p2&&!pe){showToast('Вкажіть хоча б одну ціну','error');return}
+
+  var btn = document.getElementById('btnSubmit');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+
+  var params = {product_name:product,active_ingredient:ingredient,price_prepayment:pp,price_2080:p2,price_easy:pe,comment:comment};
+
+  if(editId) {
+    params.offer_id = editId;
+    apiCall('update_offer',params,function(data){
+      btn.disabled=false; btn.textContent='Зберегти зміни';
+      if(!data.ok){showToast(data.error||'Помилка','error');return}
+      showToast(data.message||'Збережено!','success');
+      closeModal(); loadMyOffers();
+    });
+  } else {
+    params.lot_id = document.getElementById('offerLotId').value;
+    apiCall('submit_offer',params,function(data){
+      btn.disabled=false; btn.textContent='Подати пропозицію';
+      if(!data.ok){showToast(data.error||'Помилка','error');return}
+      showToast(data.message||'Подано!','success');
+      closeModal(); loadMyOffers();
+    });
+  }
+}
+
+// ============================================================================
+// API
+// ============================================================================
+function apiCall(action, params, callback) {
+  params = params||{};
+  params.action = action;
+  if(session.token) params.token = session.token;
+
+  var url = API_URL + '?' + encodeParams(params);
+
+  fetch(url, {redirect:'follow'})
+    .then(function(r){return r.json()})
+    .then(function(data){
+      if(data.error&&data.error.indexOf('Сесія')!==-1){logout();showToast('Сесія закінчилась','error');return}
+      callback(data);
+    })
+    .catch(function(){
+      fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(params),redirect:'follow'})
+        .then(function(r){return r.json()}).then(callback)
+        .catch(function(){callback({ok:false,error:'Помилка з\'єднання'})});
+    });
+}
+
+function encodeParams(o){return Object.keys(o).map(function(k){return encodeURIComponent(k)+'='+encodeURIComponent(o[k])}).join('&')}
+
+// ============================================================================
+// UTILS
+// ============================================================================
+function showToast(msg,type){
+  var c=document.getElementById('toasts');
+  var t=document.createElement('div');
+  t.className='toast '+(type||'');
+  t.innerHTML=(type==='success'?'✅ ':type==='error'?'❌ ':'ℹ️ ')+esc(msg);
+  c.appendChild(t);
+  setTimeout(function(){t.style.opacity='0';t.style.transition='.3s'},3000);
+  setTimeout(function(){t.remove()},3500);
+}
+
+function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=String(s);return d.innerHTML}
+
+document.getElementById('modalOffer').addEventListener('click',function(e){if(e.target===this)closeModal()});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal()});
+</script>
+</body>
+</html>
