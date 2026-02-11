@@ -613,7 +613,7 @@ function priceCell(label,val,minPrice){
       } else {
         var pct = ((myP - minP) / minP * 100).toFixed(1);
         var cls = parseFloat(pct) <= 5 ? 'close' : 'far';
-        diff = '<div class="price-diff '+cls+'">+'+pct+'% від мін.</div>';
+        diff = '<div class="price-diff '+cls+'">ваша ціна на '+pct+'% більша</div>';
       }
     } else {
       diff = '<div class="price-diff nodata">немає конкурентів</div>';
