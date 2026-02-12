@@ -197,9 +197,11 @@ td.price.has-value{color:var(--accent);font-weight:600}
 .auth-error{color:#dc2626;font-size:.85rem;margin-top:.5rem;display:none}
 .auth-register{display:inline-flex;align-items:center;gap:.4rem;margin-top:.7rem;padding:.5rem 1.2rem;background:#2AABEE;color:#fff;border-radius:10px;font-size:.9rem;font-weight:600;text-decoration:none;transition:all .2s}
 .auth-register:hover{background:#229ED9;transform:scale(1.03);color:#fff}
-.auth-success{background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:2px solid #22c55e;border-radius:16px;padding:1rem 1.5rem;margin:1rem 0;text-align:center;display:none}
+.auth-success{background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:2px solid #22c55e;border-radius:16px;padding:1rem 1.5rem;margin:1rem 0;text-align:center;display:flex;align-items:center;justify-content:center;gap:.6rem;flex-wrap:wrap}
 .auth-success .name{color:var(--accent);font-weight:700}
 .auth-logout{color:#78716c;font-size:.85rem;cursor:pointer;text-decoration:underline;margin-left:.5rem}
+.cabinet-link{display:inline-flex;align-items:center;gap:.3rem;background:var(--accent);color:#fff;padding:.45rem 1rem;border-radius:8px;font-size:.85rem;font-weight:600;text-decoration:none;margin-left:.8rem;transition:background .2s}
+.cabinet-link:hover{background:#15803d}
 td.action{text-align:center;white-space:nowrap}
 
 .term-badge{display:inline-block;padding:.2rem .55rem;border-radius:6px;font-size:.73rem;font-family:'JetBrains Mono',monospace}
@@ -306,6 +308,7 @@ td.action{text-align:center;white-space:nowrap}
 <div class="section" id="authOk" style="display:none">
   <div class="auth-success">
     ✅ Ви авторизовані як <span class="name" id="authCompanyName">—</span>
+    <a href="cabinet.html" class="cabinet-link" id="cabinetLink">📋 Кабінет учасника</a>
     <span class="auth-logout" id="authLogout">Вийти</span>
   </div>
 </div>
