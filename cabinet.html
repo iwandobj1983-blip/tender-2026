@@ -362,7 +362,7 @@ textarea.form-input{resize:vertical;min-height:70px}
 // ============================================================================
 var API_URL = 'https://script.google.com/macros/s/AKfycbz4vr_oSE0e8JqIes_MvM8H0Ei4j_Mf7iRkVyqojSKlSPuUjGffQBxxl3_eWza8z1CMsg/exec';
 
-var session = { token:null, company_id:null, company_name:null, user_name:null, lots:[], offers:[] };
+var session = { token:null, company_id:null, company_name:null, user_name:null, tender_active:true, lots:[], offers:[] };
 
 // ============================================================================
 // AUTH
@@ -380,6 +380,7 @@ function doLogin() {
     session.token = data.token;
     session.company_id = data.company_id;
     session.company_name = data.company_name;
+    session.tender_active = data.tender_active !== false;
     // Перехід до ідентифікації співробітника
     showIdentifyScreen();
   });
@@ -391,7 +392,7 @@ function showError(msg) {
 }
 
 function logout() {
-  session = {token:null,company_id:null,company_name:null,user_name:null,lots:[],offers:[]};
+  session = {token:null,company_id:null,company_name:null,user_name:null,tender_active:true,lots:[],offers:[]};
   try { sessionStorage.removeItem('cabinet_session'); } catch(e){}
   document.getElementById('screenLogin').classList.add('active');
   document.getElementById('screenOffers').classList.remove('active');
@@ -509,6 +510,7 @@ function loadLots() {
   apiCall('lots', {}, function(data){
     if(!data.ok){g.innerHTML='<div class="empty-state"><p>'+(data.error||'Помилка')+'</p></div>';return;}
     session.lots = data.lots;
+    if (data.tender_active !== undefined) session.tender_active = data.tender_active;
     renderLots(data.lots);
   });
 }
@@ -522,7 +524,10 @@ function renderLots(lots) {
       +'<div class="lot-name">'+esc(l.name)+'</div>'
       +(l.active_ingredient?'<div class="card-dr">🧪 '+esc(l.active_ingredient)+'</div>':'')
       +'<div class="lot-footer"><span class="lot-qty">📊 '+esc(l.quantity)+' '+esc(l.unit)+'</span>'
-      +'<button class="btn btn-primary btn-sm" onclick="openNewOffer(\''+esc(l.lot_id)+'\')">📝 Подати</button></div>'
+      +(session.tender_active
+        ?'<button class="btn btn-primary btn-sm" onclick="openNewOffer(\''+esc(l.lot_id)+'\')">📝 Подати</button>'
+        :'<button class="btn btn-sm" disabled style="opacity:.4;cursor:not-allowed;background:var(--surface3);color:var(--text3)">🔒 Завершено</button>')
+      +'</div>'
       +'</div>';
   }).join('');
 }
@@ -543,6 +548,7 @@ function loadMyOffers() {
   apiCall('my_offers', {}, function(data){
     if(!data.ok){c.innerHTML='<div class="empty-state"><p>'+(data.error||'Помилка')+'</p></div>';return;}
     session.offers = data.offers;
+    if (data.tender_active !== undefined) session.tender_active = data.tender_active;
     renderStats(data.offers);
     renderOffers(data.offers);
   });
@@ -557,12 +563,22 @@ function renderStats(offers) {
   offers.forEach(function(o){lots[o.lot_id]=true});
   var lotCount = Object.keys(lots).length;
 
-  document.getElementById('statsBar').innerHTML =
-    '<div class="stat-card"><div class="num">'+total+'</div><div class="label">Пропозицій</div></div>'
+  var banner = '';
+  if (!session.tender_active) {
+    banner = '<div style="background:var(--red-dim);border:1px solid var(--red);border-radius:var(--radius);padding:.8rem 1.2rem;margin-bottom:1rem;display:flex;align-items:center;gap:.6rem">'
+      +'<span style="font-size:1.2rem">🔒</span>'
+      +'<div><div style="font-weight:700;font-size:.85rem;color:var(--red)">Тендер завершено</div>'
+      +'<div style="font-size:.75rem;color:var(--text2)">Подання та редагування пропозицій закрито</div></div></div>';
+  }
+
+  document.getElementById('statsBar').innerHTML = banner
+    +'<div style="display:flex;gap:1rem;flex-wrap:wrap;width:100%">'
+    +'<div class="stat-card"><div class="num">'+total+'</div><div class="label">Пропозицій</div></div>'
     +'<div class="stat-card"><div class="num">'+lotCount+'</div><div class="label">Лотів</div></div>'
     +'<div class="stat-card"><div class="num" style="color:#16a34a">'+approved+'</div><div class="label">Затверджено</div></div>'
     +'<div class="stat-card"><div class="num" style="color:#b45309">'+pending+'</div><div class="label">На розгляді</div></div>'
-    +(rejected?'<div class="stat-card"><div class="num" style="color:#dc2626">'+rejected+'</div><div class="label">Відхилено</div></div>':'');
+    +(rejected?'<div class="stat-card"><div class="num" style="color:#dc2626">'+rejected+'</div><div class="label">Відхилено</div></div>':'')
+    +'</div>';
 }
 
 function renderOffers(offers) {
@@ -594,7 +610,9 @@ function renderOffers(offers) {
       +priceCell('20/80',o.price_2080,lot.min_2080)
       +priceCell('Партнерська',o.price_easy,lot.min_easy)
       +'</div>'
-      +(st!=='Архів'?'<div class="card-actions"><button class="btn btn-outline btn-sm" onclick="openEditOffer(\''+esc(o.offer_id)+'\')">✏️ Редагувати</button></div>':'')
+      +(st!=='Архів' && session.tender_active
+        ?'<div class="card-actions"><button class="btn btn-outline btn-sm" onclick="openEditOffer(\''+esc(o.offer_id)+'\')">✏️ Редагувати</button></div>'
+        :(st!=='Архів'?'<div class="card-actions"><button class="btn btn-sm" disabled style="opacity:.4;cursor:not-allowed;border:1px solid var(--border);background:var(--surface2);color:var(--text3)">🔒 Тендер завершено</button></div>':''))
       +'</div>';
   }).join('');
 }
