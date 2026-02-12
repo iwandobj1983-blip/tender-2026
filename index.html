@@ -197,7 +197,7 @@ td.price.has-value{color:var(--accent);font-weight:600}
 .auth-error{color:#dc2626;font-size:.85rem;margin-top:.5rem;display:none}
 .auth-register{display:inline-flex;align-items:center;gap:.4rem;margin-top:.7rem;padding:.5rem 1.2rem;background:#2AABEE;color:#fff;border-radius:10px;font-size:.9rem;font-weight:600;text-decoration:none;transition:all .2s}
 .auth-register:hover{background:#229ED9;transform:scale(1.03);color:#fff}
-.auth-success{background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:2px solid #22c55e;border-radius:16px;padding:1rem 1.5rem;margin:1rem 0;text-align:center}
+.auth-success{background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:2px solid #22c55e;border-radius:16px;padding:1rem 1.5rem;margin:1rem 0;text-align:center;display:none}
 .auth-success .name{color:var(--accent);font-weight:700}
 .auth-logout{color:#78716c;font-size:.85rem;cursor:pointer;text-decoration:underline;margin-left:.5rem}
 td.action{text-align:center;white-space:nowrap}
@@ -213,7 +213,9 @@ td.action{text-align:center;white-space:nowrap}
   background:var(--accent);color:#fff;text-decoration:none;transition:all .2s;white-space:nowrap;
 }
 .btn-offer:hover{background:var(--accent2);transform:scale(1.05);color:#fff}
+.btn-offer.disabled{background:var(--surface3);color:var(--text3);cursor:not-allowed;opacity:.5;pointer-events:none}
 .mobile-btn{display:none;align-items:center;gap:.25rem;padding:.3rem .7rem;border-radius:8px;font-size:.73rem;font-weight:600;background:var(--accent);color:#fff;text-decoration:none;white-space:nowrap}
+.mobile-btn.disabled{background:var(--surface3);color:var(--text3);cursor:not-allowed;opacity:.5;pointer-events:none}
 
 .no-results{text-align:center;padding:3rem;color:var(--text3);font-size:.95rem}
 
@@ -257,13 +259,6 @@ td.action{text-align:center;white-space:nowrap}
 }
 .fade-in{opacity:0;transform:translateY(16px);transition:all .5s cubic-bezier(.16,1,.3,1)}
 .fade-in.visible{opacity:1;transform:translateY(0)}
-  .cabinet-btn{
-  display:inline-flex;align-items:center;gap:.4rem;
-  padding:.45rem 1.1rem;border-radius:100px;font-size:.82rem;font-weight:600;
-  background:var(--accent);color:#fff!important;border:1px solid var(--accent);
-  margin-left:1rem;text-decoration:none;transition:all .2s;
-}
-.cabinet-btn:hover{background:#15803d;transform:translateY(-1px);box-shadow:0 4px 12px rgba(22,163,74,.3)}
 </style>
 </head>
 <body>
@@ -310,8 +305,7 @@ td.action{text-align:center;white-space:nowrap}
 </div>
 <div class="section" id="authOk" style="display:none">
   <div class="auth-success">
-  ✅ Ви авторизовані як <span class="name" id="authCompanyName">—</span>
-    <a href="cabinet.html" id="cabinetLink" class="cabinet-btn">📊 Кабінет учасника</a>
+    ✅ Ви авторизовані як <span class="name" id="authCompanyName">—</span>
     <span class="auth-logout" id="authLogout">Вийти</span>
   </div>
 </div>
@@ -615,6 +609,7 @@ function fmtDate(v) { if(!v) return ''; const m1=v.match(/(\d{4})-(\d{2})-(\d{2}
 function fmtTime(d) { return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
 function formatNum(n){if(n===null||n===undefined)return'—';return Number(n).toLocaleString('uk-UA',{maximumFractionDigits:2});}
 function formatPrice(n){return Number(n).toLocaleString('uk-UA',{minimumFractionDigits:2,maximumFractionDigits:2})+' $ з ПДВ';}
+function isTenderFinished(){return (META.status||'').toUpperCase().indexOf('ЗАВЕР')!==-1;}
 
 // ============================================================================
 // UI
@@ -628,16 +623,38 @@ function renderMeta() {
   // Статус
   const statusEl = document.getElementById('statusText');
   const raw = META.status || '';
+  const finished = isTenderFinished();
   if (raw.includes('ТРИВАЄ')) statusEl.textContent = 'Тендер триває';
-  else if (raw.includes('ЗАВЕР')) statusEl.textContent = 'Тендер завершено';
+  else if (finished) statusEl.textContent = 'Тендер завершено';
   else statusEl.textContent = raw || 'Тендер триває';
 
-  // Відлік з B4 (наприклад: "1 д 09:10")
+  // Статус бейдж — червоний при завершенні
+  const badge = statusEl.parentElement;
+  if (finished) {
+    badge.style.background = 'var(--red-dim)';
+    badge.style.color = 'var(--red)';
+    badge.style.borderColor = 'rgba(220,38,38,.2)';
+    var dot = badge.querySelector('.status-dot');
+    if (dot) { dot.style.background = 'var(--red)'; dot.style.animation = 'none'; }
+  }
+
+  // Countdown bar — червоний при завершенні
+  const cdBar = document.querySelector('.countdown-bar');
+  if (finished && cdBar) {
+    cdBar.style.background = 'var(--red-dim)';
+    cdBar.style.borderColor = 'rgba(220,38,38,.15)';
+    cdBar.querySelector('.label').style.color = 'var(--red)';
+    cdBar.querySelector('.label').textContent = 'Тендер завершено';
+    cdBar.querySelector('.timer').style.color = 'var(--red)';
+    cdBar.querySelector('.icon').textContent = '🔒';
+  }
+
+  // Відлік з B4
   const cdEl = document.getElementById('countdown');
   if (META.countdown) {
     cdEl.textContent = META.countdown;
   } else {
-    cdEl.textContent = '—';
+    cdEl.textContent = finished ? '00:00:00' : '—';
   }
 
   // Дата з B2
@@ -718,15 +735,18 @@ function renderTable(changedIds) {
     let tc='term-far';if(dl!==null){if(dl<=14)tc='term-soon';else if(dl<=45)tc='term-mid';}
     const termD=l.term?l.term.split('-').reverse().join('.'):'—';
     const flash=changedIds.includes(l.id)?' price-updated':'';
+    const fin=isTenderFinished();
+    const btnDesk=fin?'<span class="btn-offer disabled">🔒 Завершено</span>':'<a href="'+BOT_URL+l.id+'" target="_blank" class="btn-offer">➕ Подати</a>';
+    const btnMob=fin?'<span class="mobile-btn disabled">🔒 Завершено</span>':'<a href="'+BOT_URL+l.id+'" target="_blank" class="mobile-btn">➕ Подати</a>';
     return `<tr>
-      <td class="lot-id">${l.id}</td><td class="lot-name">${l.name}<br><a href="${BOT_URL}${l.id}" target="_blank" class="mobile-btn">➕ Подати</a></td>
+      <td class="lot-id">${l.id}</td><td class="lot-name">${l.name}<br>${btnMob}</td>
       <td class="ingredient">${l.ingredient||'—'}</td><td class="unit">${l.unit}</td>
       <td class="quantity${IS_AUTH?'':' auth-hidden'}">${formatNum(l.quantity)}</td>
       <td><span class="term-badge ${tc}">${termD}</span></td>
       <td class="price${IS_AUTH?'':' auth-hidden'} ${l.min_pre?'has-value':''}${flash}">${l.min_pre?formatPrice(l.min_pre):'—'}</td>
       <td class="price${IS_AUTH?'':' auth-hidden'} ${l.min_2080?'has-value':''}${flash}">${l.min_2080?formatPrice(l.min_2080):'—'}</td>
       <td class="price${IS_AUTH?'':' auth-hidden'} ${l.min_easy?'has-value':''}${flash}">${l.min_easy?formatPrice(l.min_easy):'—'}</td>
-      <td class="action"><a href="${BOT_URL}${l.id}" target="_blank" class="btn-offer">➕ Подати</a></td></tr>`;
+      <td class="action">${btnDesk}</td></tr>`;
   }).join('');
   document.querySelectorAll('thead th').forEach(th=>{
     th.classList.toggle('sorted',th.dataset.sort===currentSort.field);
@@ -852,7 +872,6 @@ function doLogin(edrpou) {
     document.getElementById('authRegister').style.display = 'none';
     try { sessionStorage.setItem('tender_auth', edrpou); } catch(e) {}
     applyAuth();
-    document.getElementById('cabinetLink').href = 'cabinet.html?edrpou=' + company.edrpou;
     return true;
   } else {
     document.getElementById('authError').style.display = 'block';
